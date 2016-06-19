@@ -21,7 +21,7 @@ class Item(Document):
     last_upd_ts = DateTimeField()
 
     def __repr__(self):
-        return '[{}: {}] {}. (good: {}, bad: {})'.format(self.article_id, self.region, self.title, self.good_count,
+        return '[{}: {}] {}. (good: {}, bad: {})'.format(self.article_id, self.item_type, self.title, self.good_count,
                                                          self.bad_count)
 
     def __str__(self):
