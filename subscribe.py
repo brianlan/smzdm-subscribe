@@ -3,7 +3,7 @@ from urllib import request
 from bs4 import BeautifulSoup
 
 from models import Item
-from settings import PAGES_IN_ONE_RUN, FIXED_HEADER, URL_PATTERN, logger, get_cur_ts, INFO_TYPES
+from settings import PAGES_IN_ONE_RUN, FIXED_HEADER, URL_PATTERN, logger, get_cur_ts
 
 
 def text_strip(text):
@@ -27,6 +27,7 @@ def load_data():
 
             for item in items:
                 item_type = item.div.a.get_text()
+                has_good_bad = item.find('a', {'class': 'good'})
                 new_item = Item(
                     article_id=item.get('articleid'),
                     item_type=item_type,
@@ -34,9 +35,9 @@ def load_data():
                     detail_link=item.div.h4.a.get('href'),
                     tags=[text_strip(l.get_text()) for l in item.find('div', {'class': 'lrTop'}).find_all('a')],
                     desc=item.find('div', {'class': 'lrInfo'}).get_text(),
-                    good_count=-1 if item_type in INFO_TYPES else item.find('a', {'class': 'good'}).span.em.get_text(),
-                    bad_count=-1 if item_type in INFO_TYPES else item.find('a', {'class': 'bad'}).span.em.get_text(),
-                    item_direct_link='' if item_type in INFO_TYPES else item.find('div', {'class': 'buy'}).a.get('href'),
+                    good_count=-1 if has_good_bad is None else item.find('a', {'class': 'good'}).span.em.get_text(),
+                    bad_count=-1 if has_good_bad is None else item.find('a', {'class': 'bad'}).span.em.get_text(),
+                    item_direct_link='' if has_good_bad is None else item.find('div', {'class': 'buy'}).a.get('href'),
                     last_upd_ts=get_cur_ts()
                 )
                 new_item.save()

@@ -25,8 +25,6 @@ FIXED_HEADER = {'Host': 'www.smzdm.com',
                 'Accept-Encoding': 'deflate',
                 'Connection': 'keep-alive'}
 
-INFO_TYPES = ['资讯', '百科']
-
 
 # Define Logger
 def get_cur_ts():
