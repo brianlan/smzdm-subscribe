@@ -3,6 +3,7 @@ import datetime
 
 from bs4 import BeautifulSoup
 from mongoengine import Q
+from mongoengine import DoesNotExist
 from apscheduler.schedulers.blocking import BlockingScheduler
 
 from models import Item, Keyword
@@ -16,7 +17,7 @@ def text_strip(text):
 
 def load_data():
     logger.info('Start loading data..')
-    for page_num in range(PAGES_IN_ONE_RUN):
+    for page_num in range(1):
         url = URL_PATTERN.format(page_num=page_num+1)
         req = request.Request(url, headers=FIXED_HEADER)
         try:
@@ -32,21 +33,32 @@ def load_data():
 
             for item in items:
                 try:
+                    article_id = item.get('articleid')
                     has_good_bad = item.find('a', {'class': 'good'})
-                    new_item = Item(
-                        article_id=item.get('articleid'),
-                        item_type=item.div.a.get_text(),
-                        title=text_strip(item.div.h4.a.get_text()),
-                        detail_link=item.div.h4.a.get('href'),
-                        tags=[text_strip(l.get_text()) for l in item.find('div', {'class': 'lrTop'}).find_all('a')],
-                        desc=item.find('div', {'class': 'lrInfo'}).get_text(),
-                        good_count=-1 if has_good_bad is None else item.find('a', {'class': 'good'}).span.em.get_text(),
-                        bad_count=-1 if has_good_bad is None else item.find('a', {'class': 'bad'}).span.em.get_text(),
-                        item_direct_link='' if has_good_bad is None else item.find('div', {'class': 'buy'}).a.get('href'),
-                        last_upd_ts=get_cur_ts()
-                    )
-                    new_item.save()
-                    logger.info('successfully inserted {}'.format(new_item))
+
+                    try:
+                        db_item = Item.objects.get(article_id=article_id)
+                        db_item.good_count = -1 if has_good_bad is None else item.find('a', {'class': 'good'}).span.em.get_text()
+                        db_item.bad_count = -1 if has_good_bad is None else item.find('a', {'class': 'bad'}).span.em.get_text()
+                        db_item.last_upd_ts = get_cur_ts()
+
+                    except DoesNotExist:
+                        db_item = Item(
+                            article_id=article_id,
+                            item_type=item.div.a.get_text(),
+                            title=text_strip(item.div.h4.a.get_text()),
+                            detail_link=item.div.h4.a.get('href'),
+                            tags=[text_strip(l.get_text()) for l in item.find('div', {'class': 'lrTop'}).find_all('a')],
+                            desc=item.find('div', {'class': 'lrInfo'}).get_text(),
+                            good_count=-1 if has_good_bad is None else item.find('a', {'class': 'good'}).span.em.get_text(),
+                            bad_count=-1 if has_good_bad is None else item.find('a', {'class': 'bad'}).span.em.get_text(),
+                            item_direct_link='' if has_good_bad is None else item.find('div', {'class': 'buy'}).a.get('href'),
+                            last_upd_ts=get_cur_ts()
+                        )
+
+                    db_item.save()
+                    logger.info('successfully inserted / updated {}'.format(db_item))
+
                 except Exception as e:
                     logger.error(
                         'Error when creating / saving item (articleid={}). err_msg: {}'.format(item.get('articleid'), e))
