@@ -3,10 +3,14 @@ import logging
 import datetime
 
 from pytz import timezone as tz
+from apscheduler.executors.pool import ThreadPoolExecutor, ProcessPoolExecutor
+from apscheduler.jobstores.memory import MemoryJobStore
 
 
 PROJECT_DIR = '/Users/rlan/Work/playground/smzdm-subscribe'
 LOG_DIR = '/tmp'
+
+MAIL_SERVER = 'atom.paypalcorp.com'
 
 TIMEZONE = 'Asia/Shanghai'
 
@@ -24,6 +28,27 @@ FIXED_HEADER = {'Host': 'www.smzdm.com',
                 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
                 'Accept-Encoding': 'deflate',
                 'Connection': 'keep-alive'}
+
+# Apscheduler Settings
+LOADING_JOB_ID = 1
+
+APS_SETTINGS = {
+    'daemon': {
+        'jobstores': {
+            'default': MemoryJobStore(),
+        },
+
+        'executors': {
+            'default': ThreadPoolExecutor(20),
+            'processpool': ProcessPoolExecutor(5)
+        },
+
+        'job_defaults': {
+            'coalesce': True,
+            'max_instances': 1
+        }
+    },
+}
 
 
 # Define Logger
