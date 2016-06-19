@@ -8,7 +8,8 @@ from apscheduler.schedulers.blocking import BlockingScheduler
 
 from models import Item, Keyword
 from message_mail import sendmail
-from settings import PAGES_IN_ONE_RUN, FIXED_HEADER, URL_PATTERN, logger, get_cur_ts, APS_SETTINGS, LOADING_JOB_ID
+from settings import PAGES_IN_ONE_RUN, FIXED_HEADER, URL_PATTERN, logger, get_cur_ts, APS_SETTINGS, LOADING_JOB_ID, \
+    DEFAULT_RECEIVERS, DEFAULT_SENDER
 
 
 def text_strip(text):
@@ -17,7 +18,7 @@ def text_strip(text):
 
 def load_data():
     logger.info('Start loading data..')
-    for page_num in range(1):
+    for page_num in range(PAGES_IN_ONE_RUN):
         url = URL_PATTERN.format(page_num=page_num+1)
         req = request.Request(url, headers=FIXED_HEADER)
         try:
@@ -88,7 +89,7 @@ def keyword_match_push():
             try:
                 subject = 'Subscribed SMZDM Items: {}'.format(keyword_matched_items[0].title)
                 body = '<br>'.join([i.to_html() for i in keyword_matched_items])
-                sendmail(subject, 'rlan@paypalcorp.com', ['rlan@paypalcorp.com'], body)
+                sendmail(subject, DEFAULT_SENDER, DEFAULT_RECEIVERS, body)
                 logger.info('Mail has been pushed to receivers.')
             except Exception as e:
                 logger.error('Error when pushing email. err_msg: {}'.format(e))

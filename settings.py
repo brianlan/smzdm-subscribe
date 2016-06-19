@@ -29,6 +29,9 @@ FIXED_HEADER = {'Host': 'www.smzdm.com',
                 'Accept-Encoding': 'deflate',
                 'Connection': 'keep-alive'}
 
+DEFAULT_SENDER = 'rlan@paypalcorp.com'
+DEFAULT_RECEIVERS = ['rlan@paypalcorp.com']
+
 # Apscheduler Settings
 LOADING_JOB_ID = '100166'
 
