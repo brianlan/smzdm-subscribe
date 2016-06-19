@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 from mongoengine import Q
 from apscheduler.schedulers.blocking import BlockingScheduler
 
-from models import Item
+from models import Item, Keyword
 from message_mail import sendmail
 from settings import PAGES_IN_ONE_RUN, FIXED_HEADER, URL_PATTERN, logger, get_cur_ts, APS_SETTINGS, LOADING_JOB_ID
 
@@ -15,6 +15,7 @@ def text_strip(text):
 
 
 def load_data():
+    logger.info('Start loading data..')
     for page_num in range(PAGES_IN_ONE_RUN):
         url = URL_PATTERN.format(page_num=page_num+1)
         req = request.Request(url, headers=FIXED_HEADER)
@@ -45,32 +46,44 @@ def load_data():
                         last_upd_ts=get_cur_ts()
                     )
                     new_item.save()
-                    print(url, new_item)
+                    logger.info('successfully inserted {}'.format(new_item))
                 except Exception as e:
                     logger.error(
                         'Error when creating / saving item (articleid={}). err_msg: {}'.format(item.get('articleid'), e))
 
-    push_message()
+    keyword_match_push()
 
 
-def push_message():
-    keyword_queries = Q(title___icontains='小米') | Q(title___icontains='纸尿裤')
-    keyword_matched_items = Item.objects.filter(
-        Q(row_cre_ts___gt=get_cur_ts() - datetime.timedelta(days=1)) &
-        Q(is_notified_keyword=False) &
-        keyword_queries
-    )
-    if len(keyword_matched_items) > 0:
+def keyword_match_push():
+    logger.info('Start keyword_match_push..')
+
+    logger.info('Fetching predefined keyword list..')
+    try:
+        keyword_queries = Keyword.generate_mongoengine_queries()
+    except Exception as e:
+        logger.error('Error when querying keywords pre stored in DB. err_msg: {}'.format(e))
+    else:
         try:
-            subject = 'Subscribed SMZDM Items: {}'.format(keyword_matched_items[0].title)
-            body = '<br>'.join([i.to_html() for i in keyword_matched_items])
-            sendmail(subject, 'rlan@paypalcorp.com', ['rlan@paypalcorp.com'], body)
+            keyword_matched_items = Item.objects.filter(
+                Q(row_cre_ts__gt=get_cur_ts() - datetime.timedelta(days=1)) &
+                Q(is_notified_keyword=False) &
+                keyword_queries
+            )
         except Exception as e:
-            logger.error('Error when pushing email. err_msg: {}'.format(e))
-        else:
-            for i in keyword_matched_items:
-                i.is_notified_keyword = True
-                i.save()
+            logger.error('Error when querying keyword match items. err_msg: {}'.format(e))
+
+        if len(keyword_matched_items) > 0:
+            try:
+                subject = 'Subscribed SMZDM Items: {}'.format(keyword_matched_items[0].title)
+                body = '<br>'.join([i.to_html() for i in keyword_matched_items])
+                sendmail(subject, 'rlan@paypalcorp.com', ['rlan@paypalcorp.com'], body)
+                logger.info('Mail has been pushed to receivers.')
+            except Exception as e:
+                logger.error('Error when pushing email. err_msg: {}'.format(e))
+            else:
+                for i in keyword_matched_items:
+                    i.is_notified_keyword = True
+                    i.save()
 
 
 if __name__ == '__main__':

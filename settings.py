@@ -30,7 +30,7 @@ FIXED_HEADER = {'Host': 'www.smzdm.com',
                 'Connection': 'keep-alive'}
 
 # Apscheduler Settings
-LOADING_JOB_ID = 1
+LOADING_JOB_ID = '100166'
 
 APS_SETTINGS = {
     'daemon': {
