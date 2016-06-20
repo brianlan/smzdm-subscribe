@@ -15,7 +15,7 @@ MAIL_SERVER = 'atom.paypalcorp.com'
 
 TIMEZONE = 'Asia/Shanghai'
 
-with open('config.yaml', 'r') as f:
+with open(os.path.join(PROJECT_DIR, 'config.yaml'), 'r') as f:
     config = yaml.load(f)
 
 MONGODB_SETTINGS = config['MONGODB_SETTINGS']
