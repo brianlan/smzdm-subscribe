@@ -2,6 +2,7 @@ import os
 import logging
 import datetime
 
+import yaml
 from pytz import timezone as tz
 from apscheduler.executors.pool import ThreadPoolExecutor, ProcessPoolExecutor
 from apscheduler.jobstores.memory import MemoryJobStore
@@ -14,10 +15,10 @@ MAIL_SERVER = 'atom.paypalcorp.com'
 
 TIMEZONE = 'Asia/Shanghai'
 
-MONGODB_SETTINGS = {
-    'host': '10.24.144.31',
-    'port': 27017
-}
+with open('config.yaml', 'r') as f:
+    config = yaml.load(f)
+
+MONGODB_SETTINGS = config['MONGODB_SETTINGS']
 
 PAGES_IN_ONE_RUN = 30
 
