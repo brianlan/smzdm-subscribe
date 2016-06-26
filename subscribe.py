@@ -78,7 +78,7 @@ def keyword_match_push():
     else:
         try:
             keyword_matched_items = Item.objects.filter(
-                Q(row_cre_ts__gt=get_cur_ts() - datetime.timedelta(days=1)) &
+                Q(last_upd_ts__gt=get_cur_ts() - datetime.timedelta(days=1)) &
                 Q(is_notified_keyword=False) &
                 keyword_queries
             )
