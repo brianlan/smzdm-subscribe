@@ -54,6 +54,7 @@ def load_data():
                             good_count=-1 if has_good_bad is None else item.find('a', {'class': 'good'}).span.em.get_text(),
                             bad_count=-1 if has_good_bad is None else item.find('a', {'class': 'bad'}).span.em.get_text(),
                             item_direct_link='' if has_good_bad is None else item.find('div', {'class': 'buy'}).a.get('href'),
+                            row_cre_ts=get_cur_ts(),
                             last_upd_ts=get_cur_ts()
                         )
 
