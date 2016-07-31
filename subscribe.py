@@ -8,12 +8,9 @@ from apscheduler.schedulers.blocking import BlockingScheduler
 
 from models import Item, Keyword
 from message_mail import sendmail
-from settings import PAGES_IN_ONE_RUN, FIXED_HEADER, URL_PATTERN, logger, get_cur_ts, APS_SETTINGS, LOADING_JOB_ID, \
+from utilities import get_cur_ts, text_strip
+from settings import PAGES_IN_ONE_RUN, FIXED_HEADER, URL_PATTERN, logger, APS_SETTINGS, LOADING_JOB_ID, \
     DEFAULT_RECEIVERS, DEFAULT_SENDER
-
-
-def text_strip(text):
-    return text.replace('\n', '').replace('\r', '').replace('\t', '').replace(' ', '')
 
 
 def load_data():

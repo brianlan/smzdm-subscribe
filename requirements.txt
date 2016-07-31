@@ -1,5 +1,8 @@
-pytz==2016.2
-beautifulsoup4==4.4.1
-mongoengine==0.10.6
+pytest==2.9.2
+pytz==2016.6.1
+beautifulsoup4==4.5.0
+motor==0.6.2
+pymongo==2.8.0
 apscheduler==3.1.0
 PyYAML==3.11
+aiohttp==0.22.4

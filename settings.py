@@ -1,16 +1,15 @@
 import os
 import logging
 import datetime
+from pytz import timezone as tz
 
 import yaml
-from pytz import timezone as tz
 from apscheduler.executors.pool import ThreadPoolExecutor, ProcessPoolExecutor
 from apscheduler.jobstores.memory import MemoryJobStore
 
 
 PROJECT_DIR = '/home/rlan/projects/smzdm-subscribe/smzdm-subscribe'
 LOG_DIR = '/home/rlan/log'
-
 # PROJECT_DIR = '/Users/rlan/Work/playground/smzdm-subscribe'
 # LOG_DIR = '/tmp'
 
@@ -59,15 +58,11 @@ APS_SETTINGS = {
 
 
 # Define Logger
-def get_cur_ts():
-    return datetime.datetime.now(tz(TIMEZONE))
-
-
 logger = logging.getLogger('smzdm-subscribe')
 logger.setLevel(logging.DEBUG)
 fh = logging.FileHandler(os.path.sep.join([
     LOG_DIR,
-    datetime.datetime.strftime(get_cur_ts(), '%Y%m%d')
+    datetime.datetime.strftime(datetime.datetime.now(tz(TIMEZONE)), '%Y%m%d')
 ]))
 fh.setLevel(logging.DEBUG)
 

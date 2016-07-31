@@ -1,7 +1,7 @@
 from mongoengine import connect, Document, Q
 from mongoengine import IntField, StringField, BooleanField, ListField, DateTimeField
 
-from settings import MONGODB_SETTINGS, TIMEZONE, get_cur_ts
+from settings import MONGODB_SETTINGS
 
 
 connect('smzdm', host=MONGODB_SETTINGS['host'])
