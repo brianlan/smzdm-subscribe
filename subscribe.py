@@ -1,100 +1,109 @@
 from urllib import request
 import datetime
+import asyncio
 
 from bs4 import BeautifulSoup
-from mongoengine import Q
-from mongoengine import DoesNotExist
+import aiohttp
 from apscheduler.schedulers.blocking import BlockingScheduler
+import motor.motor_asyncio
 
 from models import Item, Keyword
 from message_mail import sendmail
 from utilities import get_cur_ts, text_strip
 from settings import PAGES_IN_ONE_RUN, FIXED_HEADER, URL_PATTERN, logger, APS_SETTINGS, LOADING_JOB_ID, \
-    DEFAULT_RECEIVERS, DEFAULT_SENDER
+    DEFAULT_RECEIVERS, DEFAULT_SENDER, MONGODB_SETTINGS
+
+
+client = motor.motor_asyncio.AsyncIOMotorClient(MONGODB_SETTINGS['host'], 27017)
+db = client.smzdm_dev
+
+
+async def fetch_page(session, url):
+    with aiohttp.Timeout(30):
+        async with session.get(url, headers=FIXED_HEADER) as response:
+            assert response.status == 200
+            content = await response.read()
+            await parse_items_in_one_page(content)
+
+
+async def parse_item(item):
+    try:
+        article_id = item.get('articleid')
+        has_good_bad = item.find('a', {'class': 'good'})
+
+        db_item = Item(
+            article_id=article_id,
+            item_type=item.div.a.get_text(),
+            title=text_strip(item.div.h4.a.get_text()),
+            detail_link=item.div.h4.a.get('href'),
+            tags=[text_strip(l.get_text()) for l in item.find('div', {'class': 'lrTop'}).find_all('a')],
+            desc=item.find('div', {'class': 'lrInfo'}).get_text(),
+            good_count=-1 if has_good_bad is None else item.find('a', {'class': 'good'}).span.em.get_text(),
+            bad_count=-1 if has_good_bad is None else item.find('a', {'class': 'bad'}).span.em.get_text(),
+            item_direct_link='' if has_good_bad is None else item.find('div', {'class': 'buy'}).a.get('href'),
+            row_cre_ts=get_cur_ts(),
+            last_upd_ts=get_cur_ts()
+        )
+
+        await db.item.insert(db_item.to_dict())
+        print('successfully inserted / updated {}'.format(db_item))
+
+    except Exception as e:
+        print(
+            'Error when creating / saving item (articleid={}). err_msg: {}'.format(item.get('articleid'), e))
+
+
+async def parse_items_in_one_page(html):
+    soup = BeautifulSoup(html)
+    soup.prettify()
+    items = soup.html.body.find_all('div', {'class': 'list '})
+
+    for item in items:
+        await parse_item(item)
 
 
 def load_data():
     logger.info('Start loading data..')
-    for page_num in range(PAGES_IN_ONE_RUN):
-        url = URL_PATTERN.format(page_num=page_num+1)
-        req = request.Request(url, headers=FIXED_HEADER)
-        try:
-            con = request.urlopen(req, timeout=5)
-        except Exception as e:
-            logger.error('Error when trying to connect {} using urllib.request. err_msg: {}'.format(url, e))
-        else:
-            html = con.read()
-            con.close()
-            soup = BeautifulSoup(html)
-            soup.prettify()
-            items = soup.html.body.find_all('div', {'class': 'list '})
+    loop = asyncio.get_event_loop()
 
-            for item in items:
-                try:
-                    article_id = item.get('articleid')
-                    has_good_bad = item.find('a', {'class': 'good'})
+    with aiohttp.ClientSession(loop=loop) as session:
+        tasks = [fetch_page(session, 'http://www.smzdm.com/p'+str(i)) for i in range(1, PAGES_IN_ONE_RUN+1)]
+        loop.run_until_complete(asyncio.wait(tasks))
 
-                    try:
-                        db_item = Item.objects.get(article_id=article_id)
-                        db_item.good_count = -1 if has_good_bad is None else item.find('a', {'class': 'good'}).span.em.get_text()
-                        db_item.bad_count = -1 if has_good_bad is None else item.find('a', {'class': 'bad'}).span.em.get_text()
-                        db_item.last_upd_ts = get_cur_ts()
-
-                    except DoesNotExist:
-                        db_item = Item(
-                            article_id=article_id,
-                            item_type=item.div.a.get_text(),
-                            title=text_strip(item.div.h4.a.get_text()),
-                            detail_link=item.div.h4.a.get('href'),
-                            tags=[text_strip(l.get_text()) for l in item.find('div', {'class': 'lrTop'}).find_all('a')],
-                            desc=item.find('div', {'class': 'lrInfo'}).get_text(),
-                            good_count=-1 if has_good_bad is None else item.find('a', {'class': 'good'}).span.em.get_text(),
-                            bad_count=-1 if has_good_bad is None else item.find('a', {'class': 'bad'}).span.em.get_text(),
-                            item_direct_link='' if has_good_bad is None else item.find('div', {'class': 'buy'}).a.get('href'),
-                            row_cre_ts=get_cur_ts(),
-                            last_upd_ts=get_cur_ts()
-                        )
-
-                    db_item.save()
-                    logger.info('successfully inserted / updated {}'.format(db_item))
-
-                except Exception as e:
-                    logger.error(
-                        'Error when creating / saving item (articleid={}). err_msg: {}'.format(item.get('articleid'), e))
-
-    keyword_match_push()
+    loop.close()
+    # keyword_match_push()
 
 
-def keyword_match_push():
-    logger.info('Start keyword_match_push..')
-
-    logger.info('Fetching predefined keyword list..')
-    try:
-        keyword_queries = Keyword.generate_mongoengine_queries()
-    except Exception as e:
-        logger.error('Error when querying keywords pre stored in DB. err_msg: {}'.format(e))
-    else:
-        try:
-            keyword_matched_items = Item.objects.filter(
-                Q(last_upd_ts__gt=get_cur_ts() - datetime.timedelta(days=1)) &
-                Q(is_notified_keyword=False) &
-                keyword_queries
-            )
-        except Exception as e:
-            logger.error('Error when querying keyword match items. err_msg: {}'.format(e))
-
-        if len(keyword_matched_items) > 0:
-            try:
-                subject = 'Subscribed SMZDM Items: {}'.format(keyword_matched_items[0].title)
-                body = '<br>'.join([i.to_html() for i in keyword_matched_items])
-                sendmail(subject, DEFAULT_SENDER, DEFAULT_RECEIVERS, body)
-                logger.info('Mail has been pushed to receivers.')
-            except Exception as e:
-                logger.error('Error when pushing email. err_msg: {}'.format(e))
-            else:
-                for i in keyword_matched_items:
-                    i.is_notified_keyword = True
-                    i.save()
+# def keyword_match_push():
+#     logger.info('Start keyword_match_push..')
+#
+#     logger.info('Fetching predefined keyword list..')
+#     try:
+#         keyword_queries = Keyword.generate_mongoengine_queries()
+#     except Exception as e:
+#         logger.error('Error when querying keywords pre stored in DB. err_msg: {}'.format(e))
+#     else:
+#         try:
+#             keyword_matched_items = Item.objects.filter(
+#                 Q(last_upd_ts__gt=get_cur_ts() - datetime.timedelta(days=1)) &
+#                 Q(is_notified_keyword=False) &
+#                 keyword_queries
+#             )
+#         except Exception as e:
+#             logger.error('Error when querying keyword match items. err_msg: {}'.format(e))
+#
+#         if len(keyword_matched_items) > 0:
+#             try:
+#                 subject = 'Subscribed SMZDM Items: {}'.format(keyword_matched_items[0].title)
+#                 body = '<br>'.join([i.to_html() for i in keyword_matched_items])
+#                 sendmail(subject, DEFAULT_SENDER, DEFAULT_RECEIVERS, body)
+#                 logger.info('Mail has been pushed to receivers.')
+#             except Exception as e:
+#                 logger.error('Error when pushing email. err_msg: {}'.format(e))
+#             else:
+#                 for i in keyword_matched_items:
+#                     i.is_notified_keyword = True
+#                     i.save()
 
 
 if __name__ == '__main__':

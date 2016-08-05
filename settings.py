@@ -45,8 +45,8 @@ APS_SETTINGS = {
         },
 
         'executors': {
-            'default': ThreadPoolExecutor(20),
-            'processpool': ProcessPoolExecutor(5)
+            'default': ThreadPoolExecutor(1),
+            'processpool': ProcessPoolExecutor(1)
         },
 
         'job_defaults': {

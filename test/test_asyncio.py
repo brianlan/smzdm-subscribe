@@ -10,7 +10,7 @@ client = motor.motor_asyncio.AsyncIOMotorClient('10.24.144.31', 27017)
 db = client.smzdm_dev
 
 
-class Item:
+class Item(object):
     def __init__(self, article_id, item_type, title, detail_link, tags, desc, good_count, bad_count, item_direct_link,
                  row_cre_ts, last_upd_ts, is_notified_keyword=False):
         self.article_id = article_id
