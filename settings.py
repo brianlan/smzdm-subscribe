@@ -8,8 +8,8 @@ from apscheduler.executors.pool import ThreadPoolExecutor, ProcessPoolExecutor
 from apscheduler.jobstores.memory import MemoryJobStore
 
 
-PROJECT_DIR = '/home/rlan/projects/smzdm-subscribe/smzdm-subscribe'
-LOG_DIR = '/home/rlan/log'
+PROJECT_DIR = '/mnt/rlan/projects/smzdm-subscribe/smzdm-subscribe'
+LOG_DIR = '/mnt/rlan/log'
 
 # PROJECT_DIR = '/Users/rlan/Work/playground/smzdm-subscribe'
 # LOG_DIR = '/tmp'
