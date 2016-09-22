@@ -1,7 +1,7 @@
 from mongoengine import connect, Document, Q
 from mongoengine import IntField, StringField, BooleanField, ListField, DateTimeField
 
-from settings import MONGODB_SETTINGS, TIMEZONE, get_cur_ts
+from settings import MONGODB_SETTINGS
 
 
 connect('smzdm', host=MONGODB_SETTINGS['host'])
@@ -18,7 +18,7 @@ class Item(Document):
     bad_count = IntField()
     item_direct_link = StringField()
     is_notified_keyword = BooleanField(default=False)
-    row_cre_ts = DateTimeField(default=get_cur_ts())
+    row_cre_ts = DateTimeField()
     last_upd_ts = DateTimeField()
 
     def __repr__(self):

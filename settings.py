@@ -10,7 +10,6 @@ from apscheduler.jobstores.memory import MemoryJobStore
 
 PROJECT_DIR = '/mnt/rlan/projects/smzdm-subscribe/smzdm-subscribe'
 LOG_DIR = '/mnt/rlan/log'
-
 # PROJECT_DIR = '/Users/rlan/Work/playground/smzdm-subscribe'
 # LOG_DIR = '/tmp'
 
@@ -25,7 +24,7 @@ MONGODB_SETTINGS = config['MONGODB_SETTINGS']
 
 PAGES_IN_ONE_RUN = 30
 
-URL_PATTERN = 'http://www.smzdm.com/p{page_num}'
+URL_PATTERN = 'http://www.smzdm.com/jingxuan/p{page_num}'
 
 FIXED_HEADER = {'Host': 'www.smzdm.com',
                 'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; rv:26.0) Gecko/20100101 Firefox/26.0',

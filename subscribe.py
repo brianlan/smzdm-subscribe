@@ -29,13 +29,13 @@ def load_data():
             html = con.read()
             con.close()
             soup = BeautifulSoup(html)
-            soup.prettify()
-            items = soup.html.body.find_all('div', {'class': 'list '})
+            # soup.prettify()
+            items = soup.body.find_all('li', 'feed-row-wide')
 
             for item in items:
                 try:
                     article_id = item.get('articleid')
-                    has_good_bad = item.find('a', {'class': 'good'})
+                    has_good_bad = len(item.find_all('a', attrs={'data-type': 'zhi'})) > 0
 
                     try:
                         db_item = Item.objects.get(article_id=article_id)
@@ -44,16 +44,18 @@ def load_data():
                         db_item.last_upd_ts = get_cur_ts()
 
                     except DoesNotExist:
+                        tag_zone = item.find('div', 'feed-block-info')
                         db_item = Item(
                             article_id=article_id,
                             item_type=item.div.a.get_text(),
-                            title=text_strip(item.div.h4.a.get_text()),
-                            detail_link=item.div.h4.a.get('href'),
-                            tags=[text_strip(l.get_text()) for l in item.find('div', {'class': 'lrTop'}).find_all('a')],
-                            desc=item.find('div', {'class': 'lrInfo'}).get_text(),
-                            good_count=-1 if has_good_bad is None else item.find('a', {'class': 'good'}).span.em.get_text(),
-                            bad_count=-1 if has_good_bad is None else item.find('a', {'class': 'bad'}).span.em.get_text(),
-                            item_direct_link='' if has_good_bad is None else item.find('div', {'class': 'buy'}).a.get('href'),
+                            title=text_strip(item.h5.a.get_text()),
+                            detail_link=item.h5.a.get('href'),
+                            tags=[] if tag_zone is None else [text_strip(a.get_text()) for a in tag_zone.find_all('a')],
+                            desc=item.find('div', 'feed-block-descripe').get_text(),
+                            good_count=item.find('a', attrs={'data-zhi-type': '1'}).span.span.get_text() if has_good_bad else -1,
+                            bad_count=item.find('a', attrs={'data-zhi-type': '-1'}).span.span.get_text() if has_good_bad else -1,
+                            item_direct_link=item.find('div', 'feed-link-btn-inner').a.get('href') if has_good_bad else '',
+                            row_cre_ts=get_cur_ts(),
                             last_upd_ts=get_cur_ts()
                         )
 
