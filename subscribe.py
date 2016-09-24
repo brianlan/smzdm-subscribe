@@ -39,8 +39,8 @@ def load_data():
 
                     try:
                         db_item = Item.objects.get(article_id=article_id)
-                        db_item.good_count = -1 if has_good_bad is None else item.find('a', {'class': 'good'}).span.em.get_text()
-                        db_item.bad_count = -1 if has_good_bad is None else item.find('a', {'class': 'bad'}).span.em.get_text()
+                        db_item.good_count = item.find('a', attrs={'data-zhi-type': '1'}).span.span.get_text() if has_good_bad else -1
+                        db_item.bad_count = item.find('a', attrs={'data-zhi-type': '-1'}).span.span.get_text() if has_good_bad else -1
                         db_item.last_upd_ts = get_cur_ts()
 
                     except DoesNotExist:
