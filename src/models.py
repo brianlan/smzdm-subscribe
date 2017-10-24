@@ -1,10 +1,9 @@
-from mongoengine import connect, Document, Q
 from mongoengine import IntField, StringField, BooleanField, ListField, DateTimeField
+from mongoengine import connect, Document, Q
 
-from settings import MONGODB_SETTINGS
+from src.settings import MONGODB_SETTINGS
 
-
-connect('smzdm', host=MONGODB_SETTINGS['host'])
+connect('smzdm', host=MONGODB_SETTINGS['host'], port=MONGODB_SETTINGS['port'])
 
 
 class Item(Document):

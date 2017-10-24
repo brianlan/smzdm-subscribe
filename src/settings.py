@@ -8,19 +8,19 @@ from apscheduler.executors.pool import ThreadPoolExecutor, ProcessPoolExecutor
 from apscheduler.jobstores.memory import MemoryJobStore
 
 
-PROJECT_DIR = '/mnt/rlan/projects/smzdm-subscribe/smzdm-subscribe'
-LOG_DIR = '/mnt/rlan/log'
-# PROJECT_DIR = '/Users/rlan/Work/playground/smzdm-subscribe'
-# LOG_DIR = '/tmp'
+LOG_DIR = 'log'
 
 MAIL_SERVER = 'atom.paypalcorp.com'
 
 TIMEZONE = 'Asia/Shanghai'
 
-with open(os.path.join(PROJECT_DIR, 'config.yaml'), 'r') as f:
-    config = yaml.load(f)
+with open('auth.yml', 'r') as f:
+    auth = yaml.load(f)
 
-MONGODB_SETTINGS = config['MONGODB_SETTINGS']
+MONGODB_SETTINGS = {
+    'host': 'localhost',
+    'port': 27001
+}
 
 PAGES_IN_ONE_RUN = 30
 

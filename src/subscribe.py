@@ -1,15 +1,14 @@
-from urllib import request
 import datetime
+from urllib import request
 
 from bs4 import BeautifulSoup
-from mongoengine import Q
 from mongoengine import DoesNotExist
-from apscheduler.schedulers.blocking import BlockingScheduler
+from mongoengine import Q
 
-from models import Item, Keyword
-from message_mail import sendmail
-from settings import PAGES_IN_ONE_RUN, FIXED_HEADER, URL_PATTERN, logger, get_cur_ts, APS_SETTINGS, LOADING_JOB_ID, \
+from .settings import PAGES_IN_ONE_RUN, FIXED_HEADER, URL_PATTERN, logger, get_cur_ts, \
     DEFAULT_RECEIVERS, DEFAULT_SENDER
+from .message_mail import sendmail
+from .models import Item, Keyword
 
 
 def text_strip(text):
@@ -99,14 +98,3 @@ def keyword_match_push():
                 for i in keyword_matched_items:
                     i.is_notified_keyword = True
                     i.save()
-
-
-if __name__ == '__main__':
-    try:
-        scheduler = BlockingScheduler(APS_SETTINGS['daemon'])
-        scheduler.add_job(load_data, 'interval', misfire_grace_time=10, seconds=300, replace_existing=True,
-                          id=LOADING_JOB_ID)
-        scheduler.start()
-    except (SystemExit, KeyboardInterrupt):
-        logger.info('Exit signal triggered by user.')
-        scheduler.shutdown()
