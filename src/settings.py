@@ -10,17 +10,10 @@ from apscheduler.jobstores.memory import MemoryJobStore
 
 LOG_DIR = 'log'
 
-MAIL_SERVER = 'atom.paypalcorp.com'
-
 TIMEZONE = 'Asia/Shanghai'
 
 with open('auth.yml', 'r') as f:
     auth = yaml.load(f)
-
-MONGODB_SETTINGS = {
-    'host': 'localhost',
-    'port': 27001
-}
 
 PAGES_IN_ONE_RUN = 30
 
