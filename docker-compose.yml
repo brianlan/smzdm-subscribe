@@ -1,21 +1,21 @@
-#version: 3.2
-#
-#services:
-#  smzdm:
-#    depends_on:
-#      - mongodb
-#    networks:
-#      smzdm:
-#
-#  mongodb:
-#    image: mongo:3.4
-#    volumes:
-#      - vol_smzdm_mongodb:/data/db
-#    networks:
-#      smzdm:
-#
-#volumes:
-#  vol_smzdm_mongodb:
-#
-#networks:
-#  smzdm:
+version: 3.2
+
+services:
+  smzdm:
+    depends_on:
+      - mongodb
+    networks:
+      smzdm:
+
+  mongodb:
+    image: mongo:3.4
+    volumes:
+      - vol_smzdm_mongodb:/data/db
+    networks:
+      smzdm:
+
+volumes:
+  vol_smzdm_mongodb:
+
+networks:
+  smzdm:

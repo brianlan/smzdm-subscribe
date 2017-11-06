@@ -3,8 +3,7 @@ from mongoengine import connect, Document, Q
 
 from src.settings import auth
 
-connect('smzdm', host=auth['mongodb']['host'], port=auth['mongodb']['port'],
-        username=auth['mongodb']['username'], password=auth['mongodb']['password'])
+connect('smzdm', host=auth['mongodb']['host'], port=auth['mongodb']['port'])
 
 
 class Item(Document):
