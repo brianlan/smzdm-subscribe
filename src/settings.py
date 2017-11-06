@@ -49,6 +49,13 @@ APS_SETTINGS = {
     },
 }
 
+config = {
+    'mongodb': {
+        'host': 'mongodb',
+        'port': 27017
+    }
+}
+
 
 # Define Logger
 def get_cur_ts():
